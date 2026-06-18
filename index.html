@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가변어 VS 불변어</title>
+<style>
+body{font-family:sans-serif;background:#eef2ff;margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.card{background:#fff;padding:24px;border-radius:16px;max-width:700px;width:95%;text-align:center}
+button{padding:15px 20px;margin:8px;font-size:20px}
+.word{font-size:42px;font-weight:bold;margin:25px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="card">
+<div id="menu">
+<h1>🎮 가변어 VS 불변어</h1>
+<button onclick="start('normal')">보통</button>
+<button onclick="start('hard')">어려움</button>
+</div>
+
+<div id="game" class="hidden">
+<h2>점수: <span id="score">0</span></h2>
+<h3>최고점수: <span id="high">0</span></h3>
+<div id="word" class="word"></div>
+<button onclick="answer('가변어')">가변어</button>
+<button onclick="answer('불변어')">불변어</button>
+</div>
+</div>
+
+<script src="words.js"></script>
+<script>
+let mode="normal";
+let current;
+let score=0;
+
+document.getElementById("high").textContent =
+localStorage.getItem("highScore") || 0;
+
+function start(m){
+ mode=m;
+ score=0;
+ document.getElementById("score").textContent=0;
+ document.getElementById("menu").classList.add("hidden");
+ document.getElementById("game").classList.remove("hidden");
+ nextQuestion();
+}
+
+function nextQuestion(){
+ const list = mode==="normal" ? normalWords : hardWords;
+ current = list[Math.floor(Math.random()*list.length)];
+ document.getElementById("word").textContent = current[0];
+}
+
+function answer(choice){
+ if(choice===current[1]){
+   score += 10;
+   document.getElementById("score").textContent=score;
+
+   const high = Number(localStorage.getItem("highScore")||0);
+   if(score>high){
+      localStorage.setItem("highScore",score);
+      document.getElementById("high").textContent=score;
+   }
+   nextQuestion();
+ }else{
+   alert("게임오버! 점수: "+score);
+   document.getElementById("game").classList.add("hidden");
+   document.getElementById("menu").classList.remove("hidden");
+ }
+}
+</script>
+</body>
+</html>
