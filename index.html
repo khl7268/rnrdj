@@ -96,7 +96,7 @@ body.notice-visible{
 }
 
 .notice-bar.open .notice-detail{
-  max-height:160px;
+  max-height:170px;
   opacity:1;
   padding-bottom:14px;
 }
@@ -221,16 +221,16 @@ button:active{transform:translateY(0)}
 <div id="noticeBar" class="notice-bar hidden">
 <button id="noticeToggle" class="notice-toggle" type="button" aria-expanded="false">
 <!-- 공지 위에 보이는 제목 -->
-<span class="notice-title">업데이트됨 · 수식언 퀴즈 수정</span>
+<span class="notice-title"><span id="updateTimeText">업데이트됨</span> · 업데이트 시간 실시간 표시</span>
 <!-- 제목 아래 작은 안내 문구 -->
 <span class="notice-hint">눌러서 자세히 보기</span>
 </button>
 <div class="notice-detail">
 <ul>
 <!-- 공지를 펼쳤을 때 보이는 아래 본문 -->
-<li>수식언 퀴즈가 관형사/부사 중심으로 바뀌었어요.</li>
-<li>어려움 모드에 다로 끝나는 명사 함정 문제가 추가됐어요.</li>
-<li>버튼을 누르면 이 공지는 사라지고, 새로 들어오면 다시 보여요.</li>
+<li>공지의 업데이트 시간이 1분마다 자동으로 갱신돼요.</li>
+<li>공지를 누르면 자세한 내용이 부드럽게 펼쳐져요.</li>
+<li>퀴즈 버튼을 누르면 공지가 사라지고, 다시 들어오면 또 보여요.</li>
 </ul>
 </div>
 </div>
@@ -267,6 +267,11 @@ button:active{transform:translateY(0)}
 <script>
 const noticeBar=document.getElementById("noticeBar");
 const noticeToggle=document.getElementById("noticeToggle");
+const updateTimeText=document.getElementById("updateTimeText");
+const lastUpdatedAt=new Date("2026-06-20T17:30:05+09:00");
+
+updateTimeAgo();
+setInterval(updateTimeAgo,60000);
 document.body.classList.add("notice-visible");
 noticeBar.classList.remove("hidden");
 updateNoticeSpace();
@@ -293,6 +298,23 @@ function updateNoticeSpace(){
 
 window.addEventListener("resize",updateNoticeSpace);
 
+function updateTimeAgo(){
+ updateTimeText.textContent="업데이트: "+formatTimeAgo(lastUpdatedAt);
+}
+
+function formatTimeAgo(date){
+ const diffMs=Date.now()-date.getTime();
+ const diffMinutes=Math.max(0,Math.floor(diffMs/60000));
+ if(diffMinutes<1) return "방금 전";
+ if(diffMinutes<60) return diffMinutes+"분 전";
+
+ const diffHours=Math.floor(diffMinutes/60);
+ if(diffHours<24) return diffHours+"시간 전";
+
+ const diffDays=Math.floor(diffHours/24);
+ return diffDays+"일 전";
+}
+
 let quizType="form";
 let mode="normal";
 let current;
@@ -303,7 +325,7 @@ localStorage.getItem("highScore") || 0;
 
 function showMenu(){
  document.getElementById("menu").classList.remove("hidden");
- document.getElementById("difficulty").classList.add("hidden");
+ document.getElementById("difficulty").classList.add("hidden"); // 난이도 선택 화면 숨기기ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ
  document.getElementById("game").classList.add("hidden");
 }
 
