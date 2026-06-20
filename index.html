@@ -78,7 +78,7 @@ function start(m){
 
 function renderAnswerButtons(){
  const buttons = quizType==="modifier"
-   ? ["부사","형용사"]
+   ? ["관형사","부사"]
    : ["가변어","불변어"];
  document.getElementById("answerButtons").innerHTML =
    buttons.map(choice => `<button onclick="answer('${choice}')">${choice}</button>`).join("");
