@@ -130,6 +130,44 @@ h1{font-size:42px;margin:0 0 24px}
 h2{font-size:24px;margin:0 0 8px;color:var(--primary)}
 h3{font-size:20px;margin:0 0 26px;color:var(--muted)}
 
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:22px;
+}
+
+.stat{
+  padding:12px 10px;
+  border-radius:16px;
+  background:#f8fafc;
+  border:1px solid var(--line);
+}
+
+.stat-label{
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+}
+
+.stat-value{
+  display:block;
+  margin-top:4px;
+  color:var(--ink);
+  font-size:25px;
+  font-weight:900;
+}
+
+.time-low .stat-time{
+  background:#fef2f2;
+  border-color:#fecaca;
+}
+
+.time-low #time{
+  color:#dc2626;
+}
+
 button{
   min-width:132px;
   border:0;
@@ -209,6 +247,7 @@ button:active{transform:translateY(0)}
   .notice-detail{font-size:13px;padding-left:14px;padding-right:14px}
   .notice-bar.open .notice-detail{padding-bottom:12px}
   .card{padding:26px 18px;border-radius:20px}
+  .stats{grid-template-columns:1fr;gap:8px}
   h1{font-size:32px}
   button{width:100%;margin:7px 0;font-size:18px}
   .word{width:100%;min-width:0;font-size:46px}
@@ -221,16 +260,16 @@ button:active{transform:translateY(0)}
 <div id="noticeBar" class="notice-bar hidden">
 <button id="noticeToggle" class="notice-toggle" type="button" aria-expanded="false">
 <!-- 공지 위에 보이는 제목 -->
-<span class="notice-title"><span id="updateTimeText">업데이트됨</span> · 업데이트 시간 실시간 표시</span>
+<span class="notice-title"><span id="updateTimeText">업데이트됨</span> · 시간 제한 콤보 모드 추가</span>
 <!-- 제목 아래 작은 안내 문구 -->
 <span class="notice-hint">눌러서 자세히 보기</span>
 </button>
 <div class="notice-detail">
 <ul>
 <!-- 공지를 펼쳤을 때 보이는 아래 본문 -->
-<li>공지의 업데이트 시간이 1분마다 자동으로 갱신돼요.</li>
-<li>공지를 누르면 자세한 내용이 부드럽게 펼쳐져요.</li>
-<li>퀴즈 버튼을 누르면 공지가 사라지고, 다시 들어오면 또 보여요.</li>
+<li>이제 제한 시간 안에 문제를 맞혀야 해요.</li>
+<li>정답을 맞힐 때마다 콤보가 올라가고 점수 배율이 커져요.</li>
+<li>오답을 누르면 콤보가 끊기고 시간이 5초 줄어들어요.</li>
 </ul>
 </div>
 </div>
@@ -254,7 +293,20 @@ button:active{transform:translateY(0)}
 </div>
 
 <div id="game" class="hidden">
-<h2>점수: <span id="score">0</span></h2>
+<div class="stats">
+<div class="stat stat-time">
+<span class="stat-label">남은 시간</span>
+<span class="stat-value"><span id="time">60</span>초</span>
+</div>
+<div class="stat">
+<span class="stat-label">콤보</span>
+<span class="stat-value">x<span id="combo">0</span></span>
+</div>
+<div class="stat">
+<span class="stat-label">점수</span>
+<span class="stat-value" id="score">0</span>
+</div>
+</div>
 <h3>최고점수: <span id="high">0</span></h3>
 <div id="word" class="word"></div>
 <div id="example" class="example"></div>
@@ -268,7 +320,7 @@ button:active{transform:translateY(0)}
 const noticeBar=document.getElementById("noticeBar");
 const noticeToggle=document.getElementById("noticeToggle");
 const updateTimeText=document.getElementById("updateTimeText");
-const lastUpdatedAt=new Date("2026-06-20T17:30:05+09:00");
+const lastUpdatedAt=new Date("2026-06-20T20:07:22+09:00");
 
 updateTimeAgo();
 setInterval(updateTimeAgo,60000);
@@ -319,14 +371,19 @@ let quizType="form";
 let mode="normal";
 let current;
 let score=0;
+let combo=0;
+let timeLeft=60;
+let timerId;
 
 document.getElementById("high").textContent =
 localStorage.getItem("highScore") || 0;
 
 function showMenu(){
+ stopTimer();
  document.getElementById("menu").classList.remove("hidden");
- document.getElementById("difficulty").classList.add("hidden"); // 난이도 선택 화면 숨기기ㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇㅇ
+ document.getElementById("difficulty").classList.add("hidden");
  document.getElementById("game").classList.add("hidden");
+ document.body.classList.remove("time-low");
 }
 
 function showDifficulty(type){
@@ -340,12 +397,17 @@ function showDifficulty(type){
 function start(m){
  mode=m;
  score=0;
+ combo=0;
+ timeLeft=60;
  document.getElementById("score").textContent=0;
+ document.getElementById("combo").textContent=0;
+ updateTimeDisplay();
  document.getElementById("menu").classList.add("hidden");
  document.getElementById("difficulty").classList.add("hidden");
  document.getElementById("game").classList.remove("hidden");
  renderAnswerButtons();
  nextQuestion();
+ startTimer();
 }
 
 function renderAnswerButtons(){
@@ -353,7 +415,7 @@ function renderAnswerButtons(){
    ? ["관형사","부사"]
    : ["가변어","불변어"];
  document.getElementById("answerButtons").innerHTML =
-   buttons.map(choice => `<button onclick="answer('${choice}')">${choice}</button>`).join("");
+   buttons.map(choice => `<button onclick="hideNotice(); answer('${choice}')">${choice}</button>`).join("");
 }
 
 function nextQuestion(){
@@ -385,7 +447,9 @@ function renderExample(){
 
 function answer(choice){
  if(choice===current[1]){
-   score += 10;
+   combo += 1;
+   score += 10 * combo;
+   document.getElementById("combo").textContent=combo;
    document.getElementById("score").textContent=score;
 
    const high = Number(localStorage.getItem("highScore")||0);
@@ -395,10 +459,43 @@ function answer(choice){
    }
    nextQuestion();
  }else{
-   alert("게임오버! 점수: "+score);
-   document.getElementById("game").classList.add("hidden");
-   document.getElementById("difficulty").classList.remove("hidden");
+   combo=0;
+   document.getElementById("combo").textContent=combo;
+   timeLeft=Math.max(0,timeLeft-5);
+   updateTimeDisplay();
+   if(timeLeft===0) endGame();
  }
+}
+
+function startTimer(){
+ stopTimer();
+ timerId=setInterval(() => {
+   timeLeft -= 1;
+   updateTimeDisplay();
+   if(timeLeft<=0) endGame();
+ },1000);
+}
+
+function stopTimer(){
+ if(timerId){
+   clearInterval(timerId);
+   timerId=null;
+ }
+}
+
+function updateTimeDisplay(){
+ document.getElementById("time").textContent=Math.max(0,timeLeft);
+ document.body.classList.toggle("time-low",timeLeft<=10);
+}
+
+function endGame(){
+ stopTimer();
+ timeLeft=0;
+ updateTimeDisplay();
+ alert("시간 종료! 점수: "+score);
+ document.getElementById("game").classList.add("hidden");
+ document.getElementById("difficulty").classList.remove("hidden");
+ document.body.classList.remove("time-low");
 }
 </script>
 </body>
