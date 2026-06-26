@@ -137,6 +137,38 @@ h3{font-size:20px;margin:0 0 26px;color:var(--muted)}
   margin-bottom:22px;
 }
 
+.time-panel{
+  margin-bottom:16px;
+  text-align:left;
+}
+
+.time-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:900;
+}
+
+.time-track{
+  position:relative;
+  height:18px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#e5e7eb;
+  box-shadow:inset 0 0 0 1px var(--line);
+}
+
+.time-fill{
+  width:100%;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#22c55e,#2563eb);
+  transition:width .25s ease,background .25s ease;
+}
+
 .stat{
   padding:12px 10px;
   border-radius:16px;
@@ -159,12 +191,16 @@ h3{font-size:20px;margin:0 0 26px;color:var(--muted)}
   font-weight:900;
 }
 
-.time-low .stat-time{
-  background:#fef2f2;
-  border-color:#fecaca;
+.time-low .time-fill{
+  background:linear-gradient(90deg,#f97316,#dc2626);
 }
 
-.time-low #time{
+.time-low .time-track{
+  background:#fee2e2;
+  box-shadow:inset 0 0 0 1px #fecaca;
+}
+
+.time-low #timeLabel{
   color:#dc2626;
 }
 
@@ -199,6 +235,58 @@ button:active{transform:translateY(0)}
 
 #menu button:hover,#difficulty button:not(.back):hover,#answerButtons button:hover{
   background:var(--primary-dark);
+}
+
+.mode-picker{
+  max-width:430px;
+  margin:28px auto 0;
+  padding:12px 16px;
+  border-radius:18px;
+  background:#f8fafc;
+  border:1px solid var(--line);
+  box-shadow:0 10px 26px rgba(15,23,42,.08);
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+.mode-picker:focus{
+  outline:3px solid #bfdbfe;
+  outline-offset:3px;
+}
+
+.mode-picker-label{
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:900;
+}
+
+.mode-picker-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-top:8px;
+}
+
+.mode-arrow{
+  color:#94a3b8;
+  font-size:24px;
+  font-weight:900;
+}
+
+.mode-value{
+  color:var(--ink);
+  font-size:24px;
+  font-weight:900;
+}
+
+.mode-picker-hint{
+  display:block;
+  margin-top:6px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:800;
 }
 
 .word{
@@ -248,6 +336,7 @@ button:active{transform:translateY(0)}
   .notice-bar.open .notice-detail{padding-bottom:12px}
   .card{padding:26px 18px;border-radius:20px}
   .stats{grid-template-columns:1fr;gap:8px}
+  .mode-value{font-size:21px}
   h1{font-size:32px}
   button{width:100%;margin:7px 0;font-size:18px}
   .word{width:100%;min-width:0;font-size:46px}
@@ -260,16 +349,16 @@ button:active{transform:translateY(0)}
 <div id="noticeBar" class="notice-bar hidden">
 <button id="noticeToggle" class="notice-toggle" type="button" aria-expanded="false">
 <!-- 공지 위에 보이는 제목 -->
-<span class="notice-title"><span id="updateTimeText">업데이트됨</span> · 시간 제한 콤보 모드 추가</span>
+<span class="notice-title"><span id="updateTimeText">업데이트됨</span> · 문제 출제 흐름 개선</span>
 <!-- 제목 아래 작은 안내 문구 -->
 <span class="notice-hint">눌러서 자세히 보기</span>
 </button>
 <div class="notice-detail">
 <ul>
 <!-- 공지를 펼쳤을 때 보이는 아래 본문 -->
-<li>이제 제한 시간 안에 문제를 맞혀야 해요.</li>
-<li>정답을 맞힐 때마다 콤보가 올라가고 점수 배율이 커져요.</li>
-<li>오답을 누르면 콤보가 끊기고 시간이 5초 줄어들어요.</li>
+<li>방금 나온 단어가 바로 다시 나오지 않게 했어요.</li>
+<li>같은 정답 유형이 3번 연속 나오지 않게 조정했어요.</li>
+<li>형태 퀴즈와 수식언 퀴즈 모두 같은 규칙이 적용돼요.</li>
 </ul>
 </div>
 </div>
@@ -285,6 +374,15 @@ button:active{transform:translateY(0)}
 
 <div id="difficulty" class="hidden">
 <h1 id="difficultyTitle">난이도 선택</h1>
+<div id="modePicker" class="mode-picker" tabindex="0" role="button" aria-label="게임 모드 선택">
+<span class="mode-picker-label">게임 모드</span>
+<div class="mode-picker-row">
+<span class="mode-arrow">‹</span>
+<span id="modeValue" class="mode-value">일반 모드</span>
+<span class="mode-arrow">›</span>
+</div>
+<span class="mode-picker-hint">PC: ← → / 모바일: 꾹 누르기</span>
+</div>
 <button onclick="start('easy')">쉬움</button>
 <button onclick="start('normal')">보통</button>
 <button onclick="start('hard')">어려움</button>
@@ -293,11 +391,16 @@ button:active{transform:translateY(0)}
 </div>
 
 <div id="game" class="hidden">
-<div class="stats">
-<div class="stat stat-time">
-<span class="stat-label">남은 시간</span>
-<span class="stat-value"><span id="time">60</span>초</span>
+<div class="time-panel">
+<div class="time-top">
+<span>남은 시간</span>
+<span id="timeLabel">60초</span>
 </div>
+<div class="time-track">
+<div id="timeFill" class="time-fill"></div>
+</div>
+</div>
+<div class="stats">
 <div class="stat">
 <span class="stat-label">콤보</span>
 <span class="stat-value">x<span id="combo">0</span></span>
@@ -306,8 +409,11 @@ button:active{transform:translateY(0)}
 <span class="stat-label">점수</span>
 <span class="stat-value" id="score">0</span>
 </div>
+<div class="stat">
+<span class="stat-label">최고점수</span>
+<span class="stat-value" id="high">0</span>
 </div>
-<h3>최고점수: <span id="high">0</span></h3>
+</div>
 <div id="word" class="word"></div>
 <div id="example" class="example"></div>
 <div id="answerButtons"></div>
@@ -320,7 +426,12 @@ button:active{transform:translateY(0)}
 const noticeBar=document.getElementById("noticeBar");
 const noticeToggle=document.getElementById("noticeToggle");
 const updateTimeText=document.getElementById("updateTimeText");
-const lastUpdatedAt=new Date("2026-06-20T20:07:22+09:00");
+const lastUpdatedAt=new Date("2026-06-26T21:23:32+09:00");
+const GAME_TIME=60;
+const TIME_ATTACK_START=5;
+const TIME_ATTACK_BONUS=1;
+const BASE_SCORE=4;
+const WRONG_TIME_PENALTY=5;
 
 updateTimeAgo();
 setInterval(updateTimeAgo,60000);
@@ -350,8 +461,41 @@ function updateNoticeSpace(){
 
 window.addEventListener("resize",updateNoticeSpace);
 
+document.addEventListener("keydown", event => {
+ if(document.getElementById("difficulty").classList.contains("hidden")) return;
+ if(event.key==="ArrowLeft" || event.key==="ArrowRight"){
+   event.preventDefault();
+   togglePlayMode();
+ }
+});
+
+const modePicker=document.getElementById("modePicker");
+
+modePicker.addEventListener("mousedown", startLongPress);
+modePicker.addEventListener("touchstart", startLongPress);
+modePicker.addEventListener("mouseup", cancelLongPress);
+modePicker.addEventListener("mouseleave", cancelLongPress);
+modePicker.addEventListener("touchend", cancelLongPress);
+modePicker.addEventListener("touchcancel", cancelLongPress);
+
 function updateTimeAgo(){
  updateTimeText.textContent="업데이트: "+formatTimeAgo(lastUpdatedAt);
+}
+
+function startLongPress(event){
+ event.preventDefault();
+ cancelLongPress();
+ longPressTimer=setTimeout(() => {
+   togglePlayMode();
+   longPressTimer=null;
+ },550);
+}
+
+function cancelLongPress(){
+ if(longPressTimer){
+   clearTimeout(longPressTimer);
+   longPressTimer=null;
+ }
 }
 
 function formatTimeAgo(date){
@@ -368,12 +512,17 @@ function formatTimeAgo(date){
 }
 
 let quizType="form";
+let playMode="normal";
+let longPressTimer;
 let mode="normal";
 let current;
 let score=0;
 let combo=0;
-let timeLeft=60;
+let timeLeft=GAME_TIME;
+let timeBarMax=GAME_TIME;
 let timerId;
+let previousWord="";
+let answerHistory=[];
 
 document.getElementById("high").textContent =
 localStorage.getItem("highScore") || 0;
@@ -388,17 +537,32 @@ function showMenu(){
 
 function showDifficulty(type){
  quizType=type;
+ setPlayMode("normal");
  document.getElementById("difficultyTitle").textContent =
    type==="modifier" ? "수식언 난이도 선택" : "형태 난이도 선택";
  document.getElementById("menu").classList.add("hidden");
  document.getElementById("difficulty").classList.remove("hidden");
 }
 
+function setPlayMode(nextMode){
+ playMode=nextMode;
+ document.getElementById("modeValue").textContent =
+   playMode==="timeAttack" ? "타임어택" : "일반 모드";
+ document.getElementById("modePicker").setAttribute("aria-label","게임 모드: "+document.getElementById("modeValue").textContent);
+}
+
+function togglePlayMode(){
+ setPlayMode(playMode==="normal" ? "timeAttack" : "normal");
+}
+
 function start(m){
  mode=m;
  score=0;
  combo=0;
- timeLeft=60;
+ previousWord="";
+ answerHistory=[];
+ timeLeft=playMode==="timeAttack" ? TIME_ATTACK_START : GAME_TIME;
+ timeBarMax=timeLeft;
  document.getElementById("score").textContent=0;
  document.getElementById("combo").textContent=0;
  updateTimeDisplay();
@@ -420,9 +584,32 @@ function renderAnswerButtons(){
 
 function nextQuestion(){
  const list = getQuestionList();
- current = list[Math.floor(Math.random()*list.length)];
+ current = pickQuestion(list);
+ previousWord=current[0];
+ answerHistory.push(current[1]);
+ if(answerHistory.length>2) answerHistory.shift();
  document.getElementById("word").textContent = current[0];
  renderExample();
+}
+
+function pickQuestion(list){
+ let candidates = list.filter(item => item[0]!==previousWord && !wouldMakeThreeSameAnswers(item[1]));
+
+ if(candidates.length===0){
+   candidates = list.filter(item => item[0]!==previousWord);
+ }
+
+ if(candidates.length===0){
+   candidates = list;
+ }
+
+ return candidates[Math.floor(Math.random()*candidates.length)];
+}
+
+function wouldMakeThreeSameAnswers(answerType){
+ return answerHistory.length===2 &&
+   answerHistory[0]===answerType &&
+   answerHistory[1]===answerType;
 }
 
 function getQuestionList(){
@@ -448,7 +635,12 @@ function renderExample(){
 function answer(choice){
  if(choice===current[1]){
    combo += 1;
-   score += 10 * combo;
+   score += BASE_SCORE * combo;
+   if(playMode==="timeAttack"){
+     timeLeft += TIME_ATTACK_BONUS;
+     timeBarMax=Math.max(timeBarMax,timeLeft);
+     updateTimeDisplay();
+   }
    document.getElementById("combo").textContent=combo;
    document.getElementById("score").textContent=score;
 
@@ -461,9 +653,14 @@ function answer(choice){
  }else{
    combo=0;
    document.getElementById("combo").textContent=combo;
-   timeLeft=Math.max(0,timeLeft-5);
-   updateTimeDisplay();
-   if(timeLeft===0) endGame();
+   if(playMode==="timeAttack"){
+     score=Math.floor(score/2);
+     document.getElementById("score").textContent=score;
+   }else{
+     timeLeft=Math.max(0,timeLeft-WRONG_TIME_PENALTY);
+     updateTimeDisplay();
+     if(timeLeft===0) endGame();
+   }
  }
 }
 
@@ -484,7 +681,10 @@ function stopTimer(){
 }
 
 function updateTimeDisplay(){
- document.getElementById("time").textContent=Math.max(0,timeLeft);
+ const safeTime=Math.max(0,timeLeft);
+ const percent=(safeTime/timeBarMax)*100;
+ document.getElementById("timeLabel").textContent=safeTime+"초";
+ document.getElementById("timeFill").style.width=percent+"%";
  document.body.classList.toggle("time-low",timeLeft<=10);
 }
 
